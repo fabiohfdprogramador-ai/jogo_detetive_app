@@ -1,0 +1,11 @@
+{
+  "name": "Rastro — Agência Meridiano",
+  "short_name": "Rastro",
+  "description": "Jogo de investigação e dedução.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1120",
+  "theme_color": "#0a1120",
+  "icons": [{ "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

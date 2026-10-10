@@ -1,0 +1,15 @@
+{
+  "name": "jogo-detetive-app",
+  "private": true,
+  "description": "Rastro — jogo de investigação (frontend Next.js + backend Node opcional)",
+  "scripts": {
+    "install:all": "npm --prefix frontend install && npm --prefix backend install",
+    "dev": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "build": "npm --prefix frontend run build && npm --prefix backend run build",
+    "test": "npm --prefix frontend test && npm --prefix backend test",
+    "test:e2e": "npm --prefix frontend run test:e2e",
+    "lint": "npm --prefix frontend run lint",
+    "typecheck": "npm --prefix frontend run typecheck && npm --prefix backend run typecheck"
+  }
+}
