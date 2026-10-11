@@ -41,7 +41,7 @@ const H = 560;
 
 let worldCache: Promise<FeatureCollection<Geometry>> | null = null;
 function loadWorld() {
-  worldCache ??= fetch("/maps/countries-110m.json")
+  worldCache ??= fetch(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/maps/countries-110m.json`)
     .then((r) => {
       if (!r.ok) throw new Error(`Mapa indisponível (${r.status})`);
       return r.json() as Promise<Topology<{ countries: GeometryCollection }>>;

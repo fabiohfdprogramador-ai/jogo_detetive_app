@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   title: { default: "Rastro — Agência Meridiano", template: "%s · Rastro" },
   description: "Jogo de investigação e dedução: colete evidências, interrogue testemunhas e capture os responsáveis.",
   applicationName: "Rastro",
-  manifest: "/manifest.webmanifest",
-  icons: { icon: "/icons/icon.svg" },
+  manifest: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/manifest.webmanifest`,
+  icons: { icon: `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icons/icon.svg` },
 };
 
 export const viewport: Viewport = {
