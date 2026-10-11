@@ -13,9 +13,9 @@ export default function CasesPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-bold text-ink">Arquivo de casos</h1>
+        <h1 className="text-2xl font-bold text-ink">📁 Casos especiais</h1>
         <p className="mt-1 text-ink-soft">
-          Cada caso é liberado quando você identifica o responsável no anterior. A dificuldade cresce ao longo da campanha.
+          Investigações narrativas e mais longas, com cena do crime, álibis e perfil do autor. Cada caso é liberado quando você identifica o responsável no anterior.
         </p>
       </header>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

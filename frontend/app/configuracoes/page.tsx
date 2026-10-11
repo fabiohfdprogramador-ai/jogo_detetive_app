@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, RotateCcw } from "lucide-react";
+import { GraduationCap, RotateCcw, Volume2 } from "lucide-react";
+import { sound } from "@/lib/audio/sound";
 import { useGame } from "@/components/game/game-provider";
 import { Card, CardHeader, LoadingScreen } from "@/components/ui/primitives";
 import { Button } from "@/components/ui/button";
@@ -130,6 +131,51 @@ export default function SettingsPage() {
               }}
             >
               Rever o tutorial
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Som" />
+        <div className="divide-y divide-line px-4">
+          <Toggle
+            label="Efeitos sonoros"
+            description="Máquina de escrever, voos, sirene e sons de pistas."
+            checked={s.soundEnabled}
+            onChange={(v) => set({ soundEnabled: v })}
+          />
+          <Toggle
+            label="Música"
+            description="Trilha de fundo original, gerada pelo próprio jogo."
+            checked={s.musicEnabled}
+            onChange={(v) => set({ musicEnabled: v })}
+          />
+          <div className="py-3">
+            <label htmlFor="volume" className="font-medium text-ink">
+              Volume: {s.volume}%
+            </label>
+            <input
+              id="volume"
+              type="range"
+              min={0}
+              max={100}
+              step={5}
+              value={s.volume}
+              onChange={(e) => set({ volume: Number(e.target.value) })}
+              className="mt-2 w-full accent-[var(--color-accent)]"
+            />
+            <Button
+              className="mt-2"
+              variant="secondary"
+              size="sm"
+              icon={<Volume2 className="size-4" aria-hidden />}
+              onClick={() => {
+                sound.unlock();
+                sound.play("success");
+              }}
+            >
+              Testar som
             </Button>
           </div>
         </div>

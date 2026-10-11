@@ -18,6 +18,11 @@ import {
   updateSettings as applySettings,
 } from "@/lib/persistence/save-manager";
 import { createBrowserRepository, type SaveRepository } from "@/lib/persistence/storage";
+import { applyChaseUpdate, clearActiveChase } from "@/lib/persistence/save-manager";
+import type { ChaseSession } from "@/types/chase";
+import { newChase, type ChaseResult } from "@/lib/chase/engine";
+import { rankIndexFor } from "@/data/world/suspects";
+import { sound } from "@/lib/audio/sound";
 import { t } from "@/lib/i18n";
 
 type LoadIssue = { kind: "corrupted"; reason: string } | { kind: "newer_version"; version: number };
@@ -37,6 +42,10 @@ interface GameContextValue {
   setTutorialCompleted(done: boolean): void;
   /** Descarta o salvamento ilegível (após guardar uma cópia) e começa do zero. */
   recoverFromLoadIssue(): Promise<void>;
+  /** Modo Perseguição */
+  startChase(): ChaseSession;
+  runChase(fn: (session: ChaseSession) => ChaseResult): ChaseResult;
+  abandonChase(): void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -67,6 +76,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  // Sincroniza o motor de som com as preferências e libera o áudio no primeiro toque.
+  useEffect(() => {
+    sound.configure({
+      enabled: save.settings.soundEnabled,
+      musicEnabled: save.settings.musicEnabled,
+      volume: save.settings.volume / 100,
+    });
+  }, [save.settings.soundEnabled, save.settings.musicEnabled, save.settings.volume]);
+
+  useEffect(() => {
+    const unlock = () => sound.unlock();
+    window.addEventListener("pointerdown", unlock);
+    window.addEventListener("keydown", unlock);
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
     };
   }, []);
 
@@ -145,6 +173,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
     await repo.save(fresh).catch(() => setSaveError(t("save.writeFailed")));
   }, []);
 
+  const startChase = useCallback(() => {
+    const session = newChase(rankIndexFor(saveRef.current.chase.record.solved));
+    commit(applyChaseUpdate(saveRef.current, session));
+    return session;
+  }, [commit]);
+
+  const runChase = useCallback(
+    (fn: (session: ChaseSession) => ChaseResult): ChaseResult => {
+      const session = saveRef.current.chase.active;
+      if (!session) return { ok: false, error: "Nenhuma missão em andamento." };
+      const result = fn(session);
+      if (result.ok && result.session !== session) commit(applyChaseUpdate(saveRef.current, result.session));
+      return result;
+    },
+    [commit],
+  );
+
+  const abandonChase = useCallback(() => commit(clearActiveChase(saveRef.current)), [commit]);
+
   const value = useMemo<GameContextValue>(
     () => ({
       ready,
@@ -160,8 +207,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
       updateSettings,
       setTutorialCompleted,
       recoverFromLoadIssue,
+      startChase,
+      runChase,
+      abandonChase,
     }),
     [
+      startChase,
+      runChase,
+      abandonChase,
       ready,
       save,
       loadIssue,

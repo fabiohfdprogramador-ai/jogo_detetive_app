@@ -4,6 +4,8 @@
  */
 import type { CaseDefinition } from "@/types/case";
 import type { CaseRecord, GameSession, GameSettings, SaveData } from "@/types/game";
+import type { ChaseRecord, ChaseSession } from "@/types/chase";
+import { chaseScore } from "@/lib/chase/engine";
 import { calculateScore } from "@/lib/game/scoring";
 import { isFinished } from "@/lib/game/selectors";
 import { SAVE_VERSION, saveDataSchema } from "./schema";
@@ -20,7 +22,14 @@ export const DEFAULT_SETTINGS: GameSettings = {
   confirmTravel: true,
   textSize: "normal",
   reducedMotion: "sistema",
+  soundEnabled: true,
+  musicEnabled: true,
+  volume: 70,
 };
+
+export function emptyChaseRecord(): ChaseRecord {
+  return { solved: 0, failed: 0, bestScore: 0, totalScore: 0, history: [] };
+}
 
 export function createEmptySave(now = new Date()): SaveData {
   const iso = now.toISOString();
@@ -33,6 +42,7 @@ export function createEmptySave(now = new Date()): SaveData {
     sessions: {},
     records: {},
     lastCaseId: null,
+    chase: { active: null, record: emptyChaseRecord() },
   };
 }
 
@@ -65,6 +75,13 @@ const MIGRATIONS: Record<number, Migration> = {
     settings: { ...DEFAULT_SETTINGS, ...(data.settings as object | undefined) },
     tutorialCompleted: data.tutorialCompleted ?? false,
     lastCaseId: data.lastCaseId ?? null,
+  }),
+  // Versão 1 → 2: configurações de som e o Modo Perseguição.
+  1: (data) => ({
+    ...data,
+    version: 2,
+    settings: { ...DEFAULT_SETTINGS, ...(data.settings as object | undefined) },
+    chase: { active: null, record: emptyChaseRecord() },
   }),
 };
 
@@ -198,4 +215,29 @@ export function computeCampaignStats(save: SaveData): CampaignStats {
     hintsUsed: sum((r) => r.hintsUsed),
     totalBestScore: sum((r) => r.bestScore),
   };
+}
+
+/** Guarda a missão em andamento e, ao terminar, atualiza o histórico da perseguição. */
+export function applyChaseUpdate(save: SaveData, session: ChaseSession, now = new Date()): SaveData {
+  const previous = save.chase.active;
+  const justFinished = session.status !== "ativo" && !(previous && previous.id === session.id && previous.status !== "ativo");
+  let record = save.chase.record;
+  if (justFinished) {
+    const score = chaseScore(session);
+    record = {
+      solved: record.solved + (session.status === "capturado" ? 1 : 0),
+      failed: record.failed + (session.status === "capturado" ? 0 : 1),
+      bestScore: Math.max(record.bestScore, score),
+      totalScore: record.totalScore + score,
+      history: [
+        { id: session.id, status: session.status, score, itemName: session.case.item.name, finishedAt: now.toISOString() },
+        ...record.history,
+      ].slice(0, 20),
+    };
+  }
+  return touch({ ...save, chase: { active: session, record } }, now);
+}
+
+export function clearActiveChase(save: SaveData, now = new Date()): SaveData {
+  return touch({ ...save, chase: { ...save.chase, active: null } }, now);
 }

@@ -1,7 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { getCaseById } from "@/lib/game/case-loader";
 import { performAction, startCase } from "@/lib/game/engine";
+import { startChase } from "@/lib/chase/engine";
 import {
+  applyChaseUpdate,
+  clearActiveChase,
+  emptyRecord,
   applySessionUpdate,
   computeCampaignStats,
   createEmptySave,
@@ -73,9 +77,40 @@ describe("salvamento e recuperação", () => {
     expect(result.status).toBe("ok");
     if (result.status !== "ok") return;
     expect(result.migrated).toBe(true);
-    expect(result.data.version).toBe(1);
+    expect(result.data.version).toBe(2);
+    expect(result.data.chase.active).toBeNull();
+    expect(result.data.settings.soundEnabled).toBe(true);
     expect(result.data.settings.hintsEnabled).toBe(false);
     expect(result.data.settings.tutorialEnabled).toBe(true);
+  });
+
+  it("migra dados da versão 1 preservando o progresso dos casos", () => {
+    const v1 = { ...createEmptySave() } as Record<string, unknown>;
+    v1.version = 1;
+    delete v1.chase;
+    v1.settings = { tutorialEnabled: false, hintsEnabled: true, confirmTravel: true, textSize: "grande", reducedMotion: "sistema" };
+    v1.records = { [caso.id]: { ...emptyRecord(), successes: 2, attempts: 3 } };
+    const result = parseSaveData(JSON.stringify(v1));
+    expect(result.status).toBe("ok");
+    if (result.status !== "ok") return;
+    expect(result.data.records[caso.id]?.successes).toBe(2);
+    expect(result.data.settings.textSize).toBe("grande");
+    expect(result.data.settings.volume).toBe(70);
+    expect(result.data.chase.record.solved).toBe(0);
+  });
+
+  it("registra o resultado da perseguição uma única vez", () => {
+    let chase = startChase(21, 0);
+    let save = applyChaseUpdate(createEmptySave(), chase);
+    expect(save.chase.active?.id).toBe(chase.id);
+    chase = { ...chase, status: "capturado", hour: chase.case.startHour + 40 };
+    save = applyChaseUpdate(save, chase);
+    save = applyChaseUpdate(save, chase);
+    expect(save.chase.record.solved).toBe(1);
+    expect(save.chase.record.history).toHaveLength(1);
+    expect(save.chase.record.bestScore).toBeGreaterThan(0);
+    expect(parseSaveData(serializeSave(save)).status).toBe("ok");
+    expect(clearActiveChase(save).chase.active).toBeNull();
   });
 
   it("atualiza estatísticas uma única vez ao concluir e libera o próximo caso", () => {

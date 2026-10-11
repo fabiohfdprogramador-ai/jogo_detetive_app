@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 const sessionStatus = z.enum(["investigando", "mandado_autorizado", "concluido", "parcial", "fracasso"]);
 const rating = z.enum(["inconclusivo", "em_formacao", "agente_de_campo", "elite"]);
@@ -72,6 +72,67 @@ export const settingsSchema = z.object({
   confirmTravel: z.boolean(),
   textSize: z.enum(["normal", "grande"]),
   reducedMotion: z.enum(["sistema", "reduzir"]),
+  soundEnabled: z.boolean(),
+  musicEnabled: z.boolean(),
+  volume: z.number().min(0).max(100),
+});
+
+const traitKey = z.enum(["sexo", "cabelo", "hobby", "marca", "veiculo"]);
+const chaseStatus = z.enum(["ativo", "capturado", "fugiu", "prisao_errada", "tempo_esgotado"]);
+
+const chaseSpotSchema = z.object({
+  id: z.string(),
+  place: z.enum(["banco", "aeroporto", "biblioteca", "museu", "mercado", "hotel", "porto", "cafe"]),
+  witness: z.object({ role: z.string(), emoji: z.string() }),
+  lines: z.array(z.string()),
+  traitClue: z.object({ trait: traitKey, value: z.string() }).optional(),
+  hideout: z.boolean().optional(),
+});
+
+export const chaseSessionSchema = z.object({
+  id: z.string(),
+  case: z.object({
+    id: z.string(),
+    seed: z.number(),
+    rankIndex: z.number().int().min(0),
+    item: z.object({ name: z.string(), emoji: z.string() }),
+    route: z.array(z.string()).min(2),
+    culpritId: z.string(),
+    revealedTraits: z.array(traitKey),
+    stops: z.record(
+      z.object({
+        cityId: z.string(),
+        kind: z.enum(["rota", "despiste", "final"]),
+        spots: z.array(chaseSpotSchema),
+        connections: z.array(z.string()),
+      }),
+    ),
+    startHour: z.number(),
+    deadlineHour: z.number(),
+  }),
+  status: chaseStatus,
+  currentCityId: z.string(),
+  hour: z.number(),
+  path: z.array(z.string()),
+  visitedSpots: z.record(z.array(z.string())),
+  notes: z.array(
+    z.object({ cityId: z.string(), spotId: z.string(), text: z.string(), kind: z.enum(["destino", "suspeito", "aviso", "nada"]) }),
+  ),
+  traitFilter: z.record(z.string()),
+  warrantSuspectId: z.string().nullable(),
+  log: z.array(z.object({ hour: z.number(), text: z.string(), emoji: z.string() })),
+  startedAt: z.string(),
+  finishedAt: z.string().nullable(),
+});
+
+const chaseRecordSchema = z.object({
+  solved: z.number().int().min(0),
+  failed: z.number().int().min(0),
+  bestScore: z.number().min(0),
+  totalScore: z.number().min(0),
+  history: z.array(
+    z.object({ id: z.string(), status: chaseStatus, score: z.number(), itemName: z.string(), finishedAt: z.string() }),
+  ),
 });
 
 export const saveDataSchema = z.object({
@@ -83,4 +144,5 @@ export const saveDataSchema = z.object({
   sessions: z.record(gameSessionSchema),
   records: z.record(caseRecordSchema),
   lastCaseId: z.string().nullable(),
+  chase: z.object({ active: chaseSessionSchema.nullable(), record: chaseRecordSchema }),
 });

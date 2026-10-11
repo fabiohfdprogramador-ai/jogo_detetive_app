@@ -1,3 +1,5 @@
+import type { ChaseRecord, ChaseSession } from "./chase";
+
 /**
  * Estados de uma investigação.
  *
@@ -119,6 +121,10 @@ export interface GameSettings {
   confirmTravel: boolean;
   textSize: "normal" | "grande";
   reducedMotion: "sistema" | "reduzir";
+  soundEnabled: boolean;
+  musicEnabled: boolean;
+  /** Volume geral, de 0 a 100. */
+  volume: number;
 }
 
 export interface SaveData {
@@ -131,4 +137,6 @@ export interface SaveData {
   sessions: Record<string, GameSession>;
   records: Record<string, CaseRecord>;
   lastCaseId: string | null;
+  /** Modo Perseguição: missão em andamento e histórico. */
+  chase: { active: ChaseSession | null; record: ChaseRecord };
 }

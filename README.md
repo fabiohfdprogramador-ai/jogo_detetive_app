@@ -1,6 +1,11 @@
 # Rastro: Agência Meridiano
 
-Jogo de investigação e dedução para navegador (computador, tablet e celular). Você é agente de uma agência fictícia: lê o relatório do caso, examina cenas, interroga testemunhas, verifica álibis, viaja entre localidades num mapa, monta o perfil do autor, pede um mandado e captura o responsável antes que o tempo acabe.
+Jogo de investigação e geografia para navegador (computador, tablet e celular). Você é agente de uma agência fictícia e tem dois modos de jogo:
+
+- **🌍 Perseguição (modo principal):** um tesouro foi roubado e o(a) culpado(a) foge pelo mundo. Em cada cidade você ouve testemunhas no banco, no aeroporto, na biblioteca e em outros lugares. As pistas sobre moeda, idioma, bandeira, pontos turísticos e comida indicam o próximo destino, e algumas revelam como o suspeito é. Voe pelo mapa-múndi real, emita o mandado na Central de Dados e faça a prisão antes do prazo. As missões são geradas a cada partida, e você sobe de patente a cada captura.
+- **📁 Casos especiais:** cinco investigações narrativas mais longas, com cena do crime, álibis e perfil do autor.
+
+Tudo tem efeitos sonoros e música originais, sintetizados pelo próprio jogo.
 
 > **Nome provisório.** "Rastro" e "Agência Meridiano" são nomes de trabalho. Antes de publicar, é preciso verificar marcas (INPI e bases internacionais) e domínios. Nenhuma verificação legal foi feita.
 
@@ -83,24 +88,38 @@ Reinicie o `npm run dev` depois de criar o arquivo. As variáveis do backend est
 
 | Comando | O que verifica |
 | --- | --- |
-| `npm test` | Testes unitários e de integração do frontend (63) e do backend (5) |
-| `npm run test:e2e` | Playwright: resolve o caso 1 inteiro pela interface, em computador e celular, e checa que não há rolagem horizontal |
+| `npm test` | Testes unitários e de integração do frontend (84) e do backend (5) |
+| `npm run test:e2e` | Playwright, em computador e celular: uma perseguição inteira até a captura e a promoção, o caso especial 1 inteiro e a ausência de rolagem horizontal |
 | `npm run typecheck` | TypeScript estrito nos dois projetos |
 | `npm run lint` | ESLint com as regras do Next.js |
 | `npm run build` | Compilação de produção dos dois projetos |
 
 Os testes cobrem: início de caso, ações válidas e inválidas, consumo de tempo, evidências condicionais, estados dos suspeitos, mandado (correto, incorreto, palpite sem evidências, requisitos formais, tentativas esgotadas), captura, dicas, pontuação e penalidades, máquina de estados, salvamento e carregamento, dados corrompidos, migração de versão e sincronização com o backend. Também há uma **verificação de consistência dos 5 casos**: referências válidas, todos os locais e evidências alcançáveis, culpado distinguível pelo perfil, cada característica do culpado revelada por uma evidência confiável e um roteiro que resolve cada caso dentro do tempo.
 
-## Como jogar
+## Como jogar os casos especiais
 
-1. **Início → Novo caso.** O primeiro caso tem um tutorial (que pode ser revisto em Configurações).
+1. **Início → Caso especial.** O primeiro caso tem um tutorial (que pode ser revisto em Configurações).
 2. **Ações:** cada ação mostra o custo em tempo antes de ser executada. Entrevistas abrem diálogos, e as evidências novas vão para o arquivo.
 3. **Mapa:** mostra só os locais já identificados. Novos destinos aparecem quando as pistas apontam para eles.
 4. **Suspeitos:** compare características, álibis e motivos. Álibis podem ser confirmados por ações, e você pode descartar suspeitos.
 5. **Mandado:** monte o perfil do autor, escolha o suspeito e cite as evidências. Um pedido negado custa tempo e pontos, e a resposta nunca revela qual requisito falhou. Acertar só no palpite não basta: as evidências obrigatórias precisam ter sido coletadas.
 6. **Captura:** com o mandado, vá até onde o suspeito está e execute a captura. Errar o local custa caro.
 
-### Campanha
+### Modo Perseguição
+
+| Elemento | Como funciona |
+| --- | --- |
+| Cidades | 30 cidades reais em 6 continentes (`frontend/data/world/cities.ts`) |
+| Suspeitos | 12 membros fictícios da **Rede Mariposa** 🦋, cada um com sexo, cabelo, passatempo, marca registrada e veículo |
+| Pistas | Cada testemunha dá uma pista do próximo destino. A categoria depende do lugar: o banco fala da moeda, o aeroporto da bandeira e o mercado da comida. Pistas que não diferenciam o destino dos despistes (por exemplo, "euros" quando outro destino também usa euro) nunca são usadas. |
+| Despistes | Em cada cidade há 2 ou 3 voos errados. Nas cidades erradas ninguém viu nada, e é preciso voltar. |
+| Tempo | Visitas custam 2, 3 e 4 h. Voos custam 1 h a cada 800 km (mínimo 2 h). Das 23h às 7h o agente dorme. O prazo vai de sábado 17h a domingo 17h, conforme a patente. |
+| Mandado | Na Central de Dados, marque as características até sobrar um suspeito. Sem mandado ele escapa; com o mandado errado, a pessoa errada é presa. |
+| Patentes | Recruta → Investigador(a) Júnior → Detetive → Inspetor(a) → Agente Especial → Diretor(a) de Campo. Rotas mais longas e prazos ajustados a cada nível. |
+
+Os prazos foram calibrados por simulação (`tests/unit/chase.test.ts`): um "robô" resolve 200 missões de cada patente visitando todos os lugares. Nas patentes iniciais ele também vence errando um voo.
+
+### Campanha dos casos especiais
 
 | # | Caso | Dificuldade | Estrutura |
 | --- | --- | --- | --- |
@@ -141,10 +160,20 @@ frontend/
 - **Mapa estilizado original em SVG**, em vez de Leaflet: não depende de chaves nem de termos de provedores e é acessível por teclado.
 - **Sem fontes externas**: tipografia do sistema, então nada é baixado no carregamento e nenhum dado vai a terceiros.
 
+## Som e música
+
+`frontend/lib/audio/sound.ts` gera todos os sons com a Web Audio API: máquina de escrever, pistas, voo, pouso, carimbo do mandado, sirene e fanfarra, além de uma trilha original em lá menor. Não há arquivos de áudio de terceiros. Os navegadores só liberam som após o primeiro clique. Em **Configurações → Som** dá para ligar e desligar efeitos e música, ajustar o volume e testar.
+
+## Mapa e dados geográficos
+
+- Contornos dos países: pacote `world-atlas` (licença ISC), derivado do **Natural Earth**, de domínio público. O arquivo fica em `frontend/public/maps/countries-110m.json` e carrega localmente, sem internet, chaves de API ou serviços pagos.
+- Projeção e rotas: `d3-geo` (ISC). Os voos seguem a rota de grande círculo, e o avião é animado (a animação é desligada se o sistema pedir movimento reduzido).
+- Bandeiras: `country-flag-icons` (MIT), em SVG, porque emojis de bandeira não aparecem no Windows.
+
 ## Salvamento
 
 - Salvamento automático após cada ação, viagem, anotação, pedido de mandado ou dica.
-- Chave `rastro:save` no localStorage, com `version: 1`. Saves de versões antigas são migrados automaticamente. Saves de versões mais novas são preservados e o jogador é avisado.
+- Chave `rastro:save` no localStorage, com `version: 2`. Saves das versões 0 e 1 são migrados automaticamente, sem perder o progresso dos casos. Saves de versões mais novas são preservados e o jogador é avisado.
 - Se o save estiver corrompido, aparece um aviso no topo. O botão "Guardar cópia e começar do zero" grava uma cópia em `rastro:save:backup:<data>` antes de criar um progresso novo.
 - Em **Configurações** dá para reiniciar a campanha inteira (com confirmação). No dossiê de cada caso dá para reiniciar só aquele caso.
 - No backend, cada jogador é um arquivo `backend/data/saves/<id>.json`, com a versão anterior guardada como `.bak`. O id é anônimo e gerado no navegador.
@@ -200,7 +229,7 @@ Classificações: Dossiê inconclusivo (sem captura), Agente em formação (< 55
 - O backend guarda saves em arquivos JSON, sem autenticação: o id anônimo funciona como "senha". Antes de produção, isso precisa de autenticação, banco de dados e limite de requisições.
 - Só há o idioma pt-BR. A estrutura de traduções (`lib/i18n`) existe, mas os textos dos casos ainda estão nos arquivos de dados.
 - Os retratos são ilustrações geradas (silhuetas com iniciais). Arte final exigiria ilustrações próprias ou licenciadas.
-- Sem efeitos sonoros ou música.
+- O modo Perseguição tem 30 cidades. Para mais variedade, basta acrescentar cidades em `data/world/cities.ts` (os testes validam cada nova entrada).
 - O ícone do app é SVG. Lojas e alguns sistemas exigem PNGs em vários tamanhos.
 
 ## O que falta para uma publicação comercial

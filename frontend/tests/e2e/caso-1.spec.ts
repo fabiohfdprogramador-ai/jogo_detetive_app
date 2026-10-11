@@ -25,7 +25,7 @@ async function travel(page: Page, destination: string) {
 
 test("resolve o primeiro caso de ponta a ponta e mantém o progresso após recarregar", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Novo caso" }).click();
+  await page.getByRole("link", { name: "Caso especial" }).click();
   await expect(page.getByRole("heading", { name: "O Astrolábio do Solar" })).toBeVisible();
   await page.getByRole("button", { name: "Iniciar investigação" }).click();
 
@@ -73,7 +73,7 @@ test("resolve o primeiro caso de ponta a ponta e mantém o progresso após recar
 });
 
 test("não há rolagem horizontal nas telas principais", async ({ page }) => {
-  for (const path of ["/", "/casos", "/casos/astrolabio-do-solar", "/desempenho", "/configuracoes"]) {
+  for (const path of ["/", "/perseguicao", "/perseguicao/jogo", "/casos", "/casos/astrolabio-do-solar", "/desempenho", "/configuracoes"]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);

@@ -46,6 +46,7 @@ import {
 import { getCaseAvailability, getCaseById } from "@/lib/game/case-loader";
 import { getLocation, getTravelCost, isFinished } from "@/lib/game/selectors";
 import { cn, formatDuration } from "@/lib/utils/format";
+import { sound } from "@/lib/audio/sound";
 
 type Tab = "local" | "evidencias" | "suspeitos" | "mandado" | "linha";
 
@@ -107,10 +108,17 @@ export function InvestigationView({ caseId }: { caseId: string }) {
   const exec = (fn: Parameters<typeof game.run>[1], view?: { title: string; witnessName?: string }) => {
     const r: EngineResult = game.run(caseDef.id, fn);
     if (!r.ok) {
+      sound.play("error");
       notify(r.error, "erro");
       return r;
     }
     const nowFinished = isFinished(r.session);
+    if (r.session.status === "concluido") sound.play("siren");
+    else if (nowFinished) sound.play("fail");
+    else if (r.session.warrant.status === "autorizado" && view?.title === "Pedido de mandado") sound.play("stamp");
+    else if (r.tone === "erro") sound.play("error");
+    else if (r.newEvidenceIds.length > 0) sound.play("clue");
+    else if (r.tone === "alerta") sound.play("nothing");
     if (view || nowFinished || r.newEvidenceIds.length > 0) {
       setResult({
         title: view?.title ?? (nowFinished ? "Investigação encerrada" : "Resultado"),
@@ -139,6 +147,7 @@ export function InvestigationView({ caseId }: { caseId: string }) {
   const doTravel = (locationId: string) => {
     const r = exec((c, s) => travelTo(c, s, locationId));
     if (r.ok) {
+      sound.play("land");
       setSelectedId(null);
       selectTab("local");
     }

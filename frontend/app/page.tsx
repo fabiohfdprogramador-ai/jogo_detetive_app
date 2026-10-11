@@ -1,6 +1,8 @@
 "use client";
 
-import { BarChart3, FolderOpen, PlayCircle, Plus, Settings } from "lucide-react";
+import { BarChart3, FolderOpen, Globe2, PlayCircle, Plus, Settings } from "lucide-react";
+import { RANKS, rankIndexFor } from "@/data/world/suspects";
+import { getCity } from "@/data/world/cities";
 import { useGame } from "@/components/game/game-provider";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, LoadingScreen, ProgressBar, SectionTitle } from "@/components/ui/primitives";
@@ -24,6 +26,10 @@ export default function HomePage() {
     cases.find((c) => getCaseAvailability(save, c) === "em_andamento") ??
     cases.find((c) => getCaseAvailability(save, c) === "disponivel");
 
+  const chaseRank = RANKS[rankIndexFor(save.chase.record.solved)]!;
+  const activeChase = save.chase.active?.status === "ativo" ? save.chase.active : null;
+  const chaseCity = activeChase ? getCity(activeChase.currentCityId) : undefined;
+
   return (
     <div className="space-y-8">
       <section className="grid-paper relative overflow-hidden rounded-2xl border border-line bg-surface px-5 py-8 sm:px-8 sm:py-10">
@@ -34,22 +40,29 @@ export default function HomePage() {
           </div>
           <h1 className="mt-4 text-3xl font-bold text-ink sm:text-4xl">Bem-vindo(a) à central, agente.</h1>
           <p className="mt-3 text-ink-soft">
-            Peças desaparecidas, documentos falsos e testemunhas que não dizem a verdade. Reúna evidências, descarte
-            hipóteses e siga o rastro até o responsável antes que o tempo acabe.
+            Tesouros roubados, ladrões fugindo pelo mundo e testemunhas cheias de pistas. Viaje de cidade em cidade,
+            descubra quem é o culpado e faça a prisão antes que o tempo acabe. {chaseRank.emoji} Sua patente: {chaseRank.name}.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <ButtonLink
+              href={activeChase ? "/perseguicao/jogo" : "/perseguicao"}
+              size="lg"
+              icon={<Globe2 className="size-5" aria-hidden />}
+            >
+              {activeChase ? `Continuar perseguição${chaseCity ? ` · ${chaseCity.name}` : ""}` : "Jogar Perseguição 🌍"}
+            </ButtonLink>
             {canContinue && lastCase && (
-              <ButtonLink href={`/investigacao/${lastCase.slug}`} size="lg" icon={<PlayCircle className="size-5" aria-hidden />}>
-                Continuar investigação
+              <ButtonLink href={`/investigacao/${lastCase.slug}`} size="lg" variant="secondary" icon={<PlayCircle className="size-5" aria-hidden />}>
+                Continuar caso especial
               </ButtonLink>
             )}
             <ButtonLink
               href={nextCase ? `/casos/${nextCase.slug}` : "/casos"}
               size="lg"
-              variant={canContinue ? "secondary" : "primary"}
+              variant="secondary"
               icon={<Plus className="size-5" aria-hidden />}
             >
-              Novo caso
+              Caso especial
             </ButtonLink>
             <ButtonLink href="/casos" size="lg" variant="secondary" icon={<FolderOpen className="size-5" aria-hidden />}>
               Arquivo de casos

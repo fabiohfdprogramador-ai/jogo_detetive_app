@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, FolderOpen, Home, Settings } from "lucide-react";
+import { BarChart3, FolderOpen, Globe2, Home, Settings } from "lucide-react";
 import { Logo } from "./logo";
 import { cn } from "@/lib/utils/format";
 
 const NAV = [
   { href: "/", label: "Início", icon: Home },
+  { href: "/perseguicao", label: "Perseguição", icon: Globe2 },
   { href: "/casos", label: "Casos", icon: FolderOpen },
   { href: "/desempenho", label: "Desempenho", icon: BarChart3 },
   { href: "/configuracoes", label: "Ajustes", icon: Settings },
@@ -19,7 +20,7 @@ function isActive(pathname: string, href: string) {
 
 export function AppHeader() {
   const pathname = usePathname();
-  const inInvestigation = pathname.startsWith("/investigacao");
+  const inInvestigation = pathname.startsWith("/investigacao") || pathname.startsWith("/perseguicao/jogo");
 
   return (
     <>
@@ -62,14 +63,14 @@ export function AppHeader() {
           aria-label="Navegação principal (celular)"
           className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
         >
-          <ul className="grid grid-cols-4">
+          <ul className="grid grid-cols-5">
             {NAV.map(({ href, label, icon: Icon }) => (
               <li key={href}>
                 <Link
                   href={href}
                   aria-current={isActive(pathname, href) ? "page" : undefined}
                   className={cn(
-                    "flex min-h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium",
+                    "flex min-h-14 flex-col items-center justify-center gap-0.5 text-[10px] font-medium",
                     isActive(pathname, href) ? "text-accent" : "text-muted",
                   )}
                 >
